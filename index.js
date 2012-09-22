@@ -1,29 +1,29 @@
-var Stream = require('stream');
+var DuplexStream = require('duplex-pipe');
 var inherits = require('inherits');
 
 var resMethods = [
-    'write', 'end', 'destroy', 'flush',
+    'write', 'end', 'flush',
     'writeHeader', 'writeHead', 'writeContinue',
     'setHeader', 'getHeader', 'removeHeader', 'addTrailers',
 ];
-var reqMethods = [
-    'pause', 'resume', 'setEncoding', 'destroy'
-];
+var resEvents = [ 'error', 'drain' ];
 
+var reqMethods = [
+    'pause', 'resume', 'setEncoding'
+];
 var reqProps = [
     'client', 'complete', 'connection',
     'headers', 'httpVersion', 'httpVersionMajor', 'httpVersionMinor',
-    'method', 'readable', 'socket', 'trailers', 'upgrade', 'url'
+    'method', 'readable', 'socket', 'trailers', 'upgrade', 'url',
 ];
-var reqEvents = [ 'data', 'end', 'close', 'error' ];
+var reqEvents = [ 'data', 'end', 'error', 'close' ];
 
 function HttpDuplex (req, res) {
+    DuplexStream.call(this);
+    
     var self = this;
     self.request = req;
     self.response = res;
-    
-    self.writable = true;
-    self.readable = true;
     
     reqEvents.forEach(function (name) {
         var emit = self.emit.bind(self, name);
@@ -32,43 +32,50 @@ function HttpDuplex (req, res) {
         });
     });
     
-    res.on('error', function () {
-        self.emit.bind(self, 'error').apply(null, arguments);
+    resEvents.forEach(function (name) {
+        var emit = self.emit.bind(self, name);
+        res.on(name, function () {
+            emit.apply(null, arguments);
+        });
     });
     
     Object.defineProperty(self, 'statusCode', {
-        get : function () {
-            return res.statusCode;
-        },
-        set : function (code) {
-            res.statusCode = code;
-        },
+        get : function () { return res.statusCode },
+        set : function (code) { res.statusCode = code },
         enumerable : true
     });
     
     reqProps.forEach(function (name) {
         Object.defineProperty(self, name, {
-            get : function () {
-                return req[name];
-            },
+            get : function () { return req[name] },
             enumerable : true
         });
     });
+    
+    Object.defineProperty(self, 'writable', {
+        get : function () { return res.writable },
+        enumerable : true
+    });
 }
 
-inherits(HttpDuplex, Stream);
+inherits(HttpDuplex, DuplexStream);
 
 reqMethods.forEach(function (name) {
     HttpDuplex.prototype[name] = function () {
-        this.request[name].apply(this.request, arguments);
+        return this.request[name].apply(this.request, arguments);
     };
 });
 
 resMethods.forEach(function (name) {
     HttpDuplex.prototype[name] = function () {
-        this.response[name].apply(this.response, arguments);
+        return this.response[name].apply(this.response, arguments);
     };
 });
+
+HttpDuplex.prototype.destroy = function () {
+    this.request.destroy();
+    this.response.destroy();
+};
 
 module.exports = function (req, res) {
     return new HttpDuplex(req, res);
