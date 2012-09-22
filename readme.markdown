@@ -2,6 +2,8 @@
 
 Turn (req,res) pairs into a single readable/writable stream.
 
+[![build status](https://secure.travis-ci.org/substack/http-duplex.png)](http://travis-ci.org/substack/http-duplex)
+
 # example
 
 # methods
