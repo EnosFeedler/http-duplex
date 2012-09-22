@@ -15,6 +15,7 @@ var reqProps = [
     'headers', 'httpVersion', 'httpVersionMajor', 'httpVersionMinor',
     'method', 'readable', 'socket', 'trailers', 'upgrade', 'url'
 ];
+var reqEvents = [ 'data', 'end', 'close', 'error' ];
 
 function HttpDuplex (req, res) {
     var self = this;
@@ -24,7 +25,18 @@ function HttpDuplex (req, res) {
     self.writable = true;
     self.readable = true;
     
-    Object.defineProperty(this, 'statusCode', {
+    reqEvents.forEach(function (name) {
+        var emit = self.emit.bind(self, name);
+        req.on(name, function () {
+            emit.apply(null, arguments);
+        });
+    });
+    
+    res.on('error', function () {
+        self.emit.bind(self, 'error').apply(null, arguments);
+    });
+    
+    Object.defineProperty(self, 'statusCode', {
         get : function () {
             return res.statusCode;
         },

@@ -8,8 +8,11 @@ var server = http.createServer(function (req, res) {
     
     if (dup.method === 'POST') {
         dup.pipe(process.stdout, { end : false });
+        dup.on('end', function () {
+            dup.end('ok\n');
+        });
     }
-    fs.createReadStream(__filename).pipe(dup);
+    else fs.createReadStream(__filename).pipe(dup);
 });
 
 server.listen(8484);
