@@ -26,17 +26,11 @@ function HttpDuplex (req, res) {
     self.response = res;
     
     reqEvents.forEach(function (name) {
-        var emit = self.emit.bind(self, name);
-        req.on(name, function () {
-            emit.apply(null, arguments);
-        });
+        req.on(name, self.emit.bind(self, name));
     });
     
     resEvents.forEach(function (name) {
-        var emit = self.emit.bind(self, name);
-        res.on(name, function () {
-            emit.apply(null, arguments);
-        });
+        res.on(name, self.emit.bind(self, name));
     });
     
     Object.defineProperty(self, 'statusCode', {
