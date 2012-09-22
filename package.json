@@ -1,6 +1,6 @@
 {
     "name" : "http-duplex",
-    "version" : "0.0.0",
+    "version" : "0.0.1",
     "description" : "turn (req,res) pairs into a single duplex stream",
     "main" : "index.js",
     "directories" : {
@@ -12,7 +12,8 @@
         "duplex-pipe" : "~0.0.1"
     },
     "devDependencies" : {
-        "tap" : "~0.3.0"
+        "tap" : "~0.3.0",
+        "request" : "~2.11.4"
     },
     "scripts" : {
         "test" : "tap test/*.js"
