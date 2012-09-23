@@ -18,7 +18,10 @@ var reqProps = [
 ];
 var reqEvents = [ 'data', 'end', 'error', 'close' ];
 
+module.exports = HttpDuplex;
+
 function HttpDuplex (req, res) {
+    if (this === global) return new HttpDuplex(req, res);
     DuplexStream.call(this);
     
     var self = this;
@@ -69,8 +72,4 @@ resMethods.forEach(function (name) {
 HttpDuplex.prototype.destroy = function () {
     this.request.destroy();
     this.response.destroy();
-};
-
-module.exports = function (req, res) {
-    return new HttpDuplex(req, res);
 };
